@@ -1,8 +1,8 @@
 import os
 
 # Notion API configuration
-NOTION_API_KEY = 'ntn_V5050303374bd0or47b7gcuiyix6d2xmglTyXP7KMQPcN6'
-NOTION_PARENT_PAGE_ID = '21812d05838e808fbe3bd0340e7f6177'
+NOTION_API_KEY = os.getenv('NOTION_API_KEY')
+NOTION_PARENT_PAGE_ID = os.getenv('NOTION_PARENT_PAGE_ID')
 
 # API settings
 NOTION_API_BASE_URL = "https://api.notion.com/v1/"
