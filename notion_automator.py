@@ -74,6 +74,17 @@ def create_task_database(parent_page_id):
             "メモ": {"rich_text": {}}
         }
     }
+    print("データベースのプロパティ定義:")
+    print("----------------------------------------")
+    print(f"タスク名: {data['properties']['タスク名']}")
+    print(f"日付: {data['properties']['日付']}")
+    print(f"時間帯: {data['properties']['時間帯']}")
+    print(f"最優先タスク？: {data['properties']['最優先タスク？']}")
+    print(f"ステータス: {data['properties']['ステータス']}")
+    print(f"達成度: {data['properties']['達成度']}")
+    print(f"やるべきこと: {data['properties']['やるべきこと']}")
+    print(f"メモ: {data['properties']['メモ']}")
+    print("----------------------------------------")
     response = requests.post(url, headers=HEADERS, data=json.dumps(data))
     if response.status_code == 200:
         print("データベース '週間タスク管理' を作成しました。")
@@ -317,45 +328,104 @@ def add_daily_report_template_to_page(page_id, date_str):
     if response.status_code != 200:
         print(f"日報テンプレートの追加に失敗しました ({page_id}): {response.status_code} - {response.text}")
 
-def create_template_page(database_id):
-    url = f"{config.NOTION_API_BASE_URL}pages"
-    data = {
-        "parent": {"database_id": database_id},
-        "properties": {
-            "タスク名": {
-                "title": [{"text": {"content": "ウォームアップ＆計画(Mon)"}}]
-            },
-            "日付": {
-                "date": {
-                    "start": "2025-06-23T08:00:00+09:00"
-                }
-            },
-            "時間帯": {
-                "select": {"name": "8:00 - 9:00"}
-            },
-            "最優先タスク？": {"checkbox": False},
-            "ステータス": {"select": {"name": "未着手"}},
-            "達成度": {"select": {"name": "未評価"}},
-            "やるべきこと": {
-                "rich_text": [
-                    {"text": {"content": "- 前日のBlenderファイル確認\n- 今日のモデリング目標設定\n- VibeCoding基礎復習（テキスト）\n- AIニュースチェック"}}
-                ]
-            },
-            "メモ": {"rich_text": []}
+def create_monday_pages(database_id):
+    # 8:00 - 9:00 ウォームアップ＆計画
+    create_template_page(database_id, "ウォームアップ＆計画(Mon)", "8:00 - 9:00", "- 前日のBlenderファイル確認\n- 今日のモデリング目標設定\n- VibeCoding基礎復習（テキスト）\n- AIニュースチェック", "", "8:00")
+    
+    # 9:00 - 11:00 Robloxアバター作成
+    create_template_page(database_id, "Robloxアバター作成(Mon)", "9:00 - 11:00", "- ポテトくんの胴体・頭の基本形状をBlenderで作成（動画チュートリアル）\n- 次のステップ: 細部のモデリングへ進む準備", "", "9:00")
+    
+    # 11:00 - 12:30 昼休憩
+    create_template_page(database_id, "昼休憩(Mon)", "11:00 - 12:30 (昼休憩)", "", "", "11:00")
+    
+    # 12:30 - 14:30 Blender取説
+    create_template_page(database_id, "Blender取説(Mon)", "12:30 - 14:30", "- Roblox向けモデリングの注意点（ポリゴン数削減、エラーチェック）の基礎（動画チュートリアル）\n- 次のステップ: テクスチャリングの基礎知識", "", "12:30")
+    
+    # 14:30 - 15:30 クールダウン＆記録
+    create_template_page(database_id, "クールダウン＆記録(Mon)", "14:30 - 15:30", "- 今日の作業を振り返る\n- 今日の達成感！記録（写真/メモ）\n- 明日やること整理", "やったこと 例: Blenderでポテトくんの胴体と頭のベースモデルを完成させた", "14:30")
+
+def create_template_page(database_id, title, time_slot, todo, memo, start_time):
+    try:
+        url = f"{config.NOTION_API_BASE_URL}pages"
+        HEADERS = {
+            "Authorization": f"Bearer {config.NOTION_API_KEY}",
+            "Notion-Version": config.NOTION_API_VERSION,
+            "Content-Type": "application/json"
         }
-    }
-    response = requests.post(url, headers=HEADERS, data=json.dumps(data))
-    if response.status_code == 200:
-        print("テンプレートページを作成しました。")
-        return response.json()["id"]
-    else:
-        print(f"テンプレートページの作成に失敗しました: {response.status_code} - {response.text}")
+        data = {
+            "parent": {"database_id": database_id},
+            "properties": {
+                "タスク名": {
+                    "title": [{"text": {"content": title}}]
+                },
+                "日付": {
+                    "date": {
+                        "start": f"2025-06-23T{start_time}:00+09:00"
+                    }
+                },
+                "時間帯": {
+                    "select": {"name": time_slot}
+                },
+                "最優先タスク？": {"checkbox": False},
+                "ステータス": {"select": {"name": "未着手"}},
+                "達成度": {"select": {"name": "未評価"}},
+                "やるべきこと": {
+                    "rich_text": [{"text": {"content": todo}}]
+                },
+                "メモ": {
+                    "rich_text": [{"text": {"content": memo}}]
+                }
+            }
+        }
+        print("\nリクエストデータの詳細:")
+        print("----------------------------------------")
+        print(f"データベースID: {database_id}")
+        print(f"タイトル: {title}")
+        print(f"時間帯: {time_slot}")
+        print(f"開始時刻: {start_time}")
+        print("----------------------------------------")
+        print("\nリクエストデータ:")
+        print("----------------------------------------")
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+        print("----------------------------------------")
+        
+        response = requests.post(url, headers=HEADERS, data=json.dumps(data))
+        
+        print("\nリクエストヘッダー:")
+        print("----------------------------------------")
+        print(f"Authorization: {HEADERS['Authorization'][:20]}... (truncated)")
+        print(f"Notion-Version: {HEADERS['Notion-Version']}")
+        print("----------------------------------------")
+        
+        try:
+            response.raise_for_status()
+            print(f"\nAPI Response: {response.status_code} - 成功")
+            print("Response JSON:")
+            print("----------------------------------------")
+            print(json.dumps(response.json(), indent=2, ensure_ascii=False))
+            print("----------------------------------------")
+            return response.json()["id"]
+        except requests.exceptions.HTTPError as e:
+            print(f"\nAPI Error: {response.status_code} - {response.text}")
+            print("Response JSON:")
+            print("----------------------------------------")
+            try:
+                print(json.dumps(response.json(), indent=2, ensure_ascii=False))
+            except:
+                print("No response body")
+            print("----------------------------------------")
+            return None
+        except Exception as e:
+            print(f"\nUnexpected error: {str(e)}")
+            return None
+    except Exception as e:
+        print(f"\nError in create_template_page: {str(e)}")
         return None
 
 if __name__ == "__main__":
     if not config.NOTION_API_KEY or not config.NOTION_PARENT_PAGE_ID:
         print("エラー: Notion APIキーまたは親ページIDが設定されていません。")
-        print(".envファイルに以下の環境変数を設定してください：")
+{{ ... }}
         print("NOTION_API_KEY=your_api_key_here")
         print("NOTION_PARENT_PAGE_ID=your_parent_page_id_here")
     else:
@@ -365,12 +435,10 @@ if __name__ == "__main__":
             database_id = create_task_database(main_page_id)
             if database_id:
                 print(f"\n作成されたデータベースID: {database_id}")
-                template_id = create_template_page(database_id)
-                if template_id:
-                    print("\nテンプレートページが作成されました。Notionでご確認ください。")
-                else:
-                    print("テンプレートページの作成に失敗しました。")
+                print("月曜日のページを作成中です...")
+                create_monday_pages(database_id)
+                print("\n月曜日のページ作成が完了しました。Notionでご確認ください。")
             else:
-                print("データベースの作成に失敗したため、テンプレートページの作成はスキップされました。")
+                print("データベースの作成に失敗したため、月曜日のページ作成はスキップされました。")
         else:
-            print("メインページの作成に失敗したため、データベースの作成はスキップされました。")
+            print("メインページの作成に失敗しました。")
