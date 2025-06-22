@@ -12,7 +12,7 @@ def create_task_database(parent_page_id):
     }
     data = {
         "parent": {"page_id": parent_page_id},
-        "title": [{"text": {"content": "週間タスク管理"}}],
+        "title": [{"text": {"content": "週間タスク管理01"}}],
         "properties": {
             "タスク名": {"title": {}},
             "日付": {"date": {}},
@@ -203,6 +203,16 @@ if __name__ == "__main__":
                     "ポテトくんの胴体・頭の基本形状をBlenderで作成（動画チュートリアル）\n次のステップ: 細部のモデリングへ進む準備",
                     "",
                     "9:00"
+                )
+                
+                # 11:00 - 12:30 昼休憩
+                page_id = create_template_page(
+                    database_id,
+                    "昼休憩",
+                    "11:00 - 12:30 (昼休憩)",
+                    "",
+                    "",
+                    "11:00"
                 )
                 
                 # 12:30 - 14:30 Blender取説
