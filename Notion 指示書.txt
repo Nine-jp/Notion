@@ -1,3 +1,38 @@
+環境変数の設定：
+NOTION_API_KEY: ntn_V5050303374bd0or47b7gcuiyix6d2xmglTyXP7KMQPcN6
+NOTION_PARENT_PAGE_ID: 21812d05838e808fbe3bd0340e7f6177
+
+セーブポイント
+
+ーーー
+この状態に戻ってください：b21a44b
+この状態に戻ってください：Save current state of Notion automation script
+2025-06-21 16:29頃の状態に戻ってください
+
+内容：
+
+修正が完了しました。notion_automator.pyのcreate_monday_pages関数で、月曜日のスケジュールページが正しく作成されています。各ページには以下の情報が含まれています：
+
+ウォームアップ＆計画 (8:00 - 9:00)
+前日のBlenderファイル確認
+今日のモデリング目標設定
+VibeCoding基礎復習
+AIニュースチェック
+Robloxアバター作成 (9:00 - 11:00)
+ポテトくんの胴体・頭の基本形状作成
+次のステップ: 細部のモデリング
+ブレンド取説 (12:30 - 14:30)
+Roblox向けモデリングの注意点
+テクスチャリングの基礎知識
+クールダウン＆記録 (14:30 - 15:30)
+作業振り返り
+達成感記録
+明日やること整理
+各ページには、時間帯、タスク内容、メモが含まれており、Notionのデータベースに適切に保存されます。これで月曜日のスケジュールページが正しく作成されるようになりました。
+ーーー
+
+
+
 # 週間スケジュール - Roblox開発＆プログラミング学習
 
 ## 🎯 今週の最優先タスク
@@ -184,6 +219,15 @@
 
 [ウォームアップ＆計画(Mon)](https://www.notion.so/Mon-21912d05838e81f8a624e39d34e9d1bb?pvs=21)
 
+git add .; git commit -m "Fix duplicate page creation and add version number to database title"
 
+warning: in the working copy of 'notion_automator.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'test_notion.py', LF will be replaced by CRLF the next time Git touches it
+[master feceacd] Fix duplicate page creation and add version number to database title
+ 2 files changed, 200 insertions(+), 1 deletion(-)
+ create mode 100644 "Notion \346\214\207\347\244\272\346\233\270.txt"
+PS F:\windsurf Project\開発\Notion>
+
+git add .; git commit -m "Fix duplicate page creation and add version number to database title"
 
 python notion_automator.py
