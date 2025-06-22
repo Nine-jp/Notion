@@ -1,17 +1,86 @@
 import requests
 import json
-from datetime import datetime, timedelta
-import config
+import datetime
+from datetime import timedelta
 import sys
+import os
+from dotenv import load_dotenv
+
+# 環境変数の読み込み
+load_dotenv()
+
+# Notion APIの設定
+NOTION_API_KEY = os.getenv("NOTION_API_KEY")
+NOTION_PARENT_PAGE_ID = os.getenv("NOTION_PARENT_PAGE_ID")
+NOTION_API_VERSION = "2022-06-28"
+NOTION_API_BASE_URL = "https://api.notion.com/v1"
+
+# 週間スケジュールデータ（例）
+WEEKLY_SCHEDULE_DATA = {
+    0: [  # 月曜日
+        {
+            "time_slot": "午前",
+            "title": "タスク1",
+            "priority": "高",
+            "todo_notes": "タスクの詳細説明",
+            "memo": "追加のメモ"
+        },
+        {
+            "time_slot": "午後",
+            "title": "タスク2",
+            "priority": "中",
+            "todo_notes": "タスクの詳細説明",
+            "memo": "追加のメモ"
+        }
+    ],
+    1: [  # 火曜日
+        {
+            "time_slot": "午前",
+            "title": "タスク3",
+            "priority": "高",
+            "todo_notes": "タスクの詳細説明",
+            "memo": "追加のメモ"
+        }
+    ],
+    2: [  # 水曜日
+        {
+            "time_slot": "午前",
+            "title": "タスク4",
+            "priority": "中",
+            "todo_notes": "タスクの詳細説明",
+            "memo": "追加のメモ"
+        }
+    ],
+    3: [  # 木曜日
+        {
+            "time_slot": "午前",
+            "title": "タスク5",
+            "priority": "中",
+            "todo_notes": "タスクの詳細説明",
+            "memo": "追加のメモ"
+        }
+    ],
+    4: [  # 金曜日
+        {
+            "time_slot": "午前",
+            "title": "タスク6",
+            "priority": "高",
+            "todo_notes": "タスクの詳細説明",
+            "memo": "追加のメモ"
+        }
+    ],
+    5: [],  # 土曜日
+    6: []   # 日曜日
+}
 
 HEADERS = {
-    "Authorization": f"Bearer {config.NOTION_API_KEY}",
-    "Notion-Version": config.NOTION_API_VERSION,
+    "Authorization": f"Bearer {NOTION_API_KEY}",
+    "Notion-Version": NOTION_API_VERSION,
     "Content-Type": "application/json",
 }
 
 def create_main_page(page_title, parent_page_id):
-    url = f"{config.NOTION_API_BASE_URL}pages"
+    url = f"{NOTION_API_BASE_URL}pages"
     data = {
         "parent": {"page_id": parent_page_id},
         "properties": {
@@ -215,120 +284,7 @@ def add_weekly_schedule_and_daily_report(database_id):
                 response = requests.post(url, headers=HEADERS, data=json.dumps(data))
                 
                 if response.status_code == 200:
-                    page_id = response.json()["id"]
-                    add_daily_report_template_to_page(page_id, current_date.strftime('%Y年%m月%d日（%a）'))
-                print(f"タスクを追加しました: {current_date.strftime('%Y-%m-%d')} - {task['時間帯']} - {task['タスク名']}")
         current_date += timedelta(days=1)
-
-def add_daily_report_template_to_page(page_id, date_str):
-    url = f"{config.NOTION_API_BASE_URL}blocks/{page_id}/children"
-    data = {
-        "children": [
-            {
-                "object": "block",
-                "type": "heading_2",
-                "heading_2": {"rich_text": [{"type": "text", "text": {"content": "日報：今日の「やったこと！」と「達成感！」"}}]}
-            },
-            {
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {"rich_text": [{"type": "text", "text": {"content": f"**日付：** {date_str}"}}]}
-            },
-            {
-                "object": "block",
-                "type": "divider",
-                "divider": {}
-            },
-            {
-                "object": "block",
-                "type": "heading_3",
-                "heading_3": {"rich_text": [{"type": "text", "text": {"content": "📝 今日の目標（事前に立てたもの）"}}]}
-            },
-            {
-                "object": "block",
-                "type": "bulleted_list_item",
-                "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": ""}}]}
-            },
-            {
-                "object": "block",
-                "type": "divider",
-                "divider": {}
-            },
-            {
-                "object": "block",
-                "type": "heading_3",
-                "heading_3": {"rich_text": [{"type": "text", "text": {"content": "✨ 今日、特に集中して取り組んだことは何ですか？"}}]}
-            },
-            {
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {"rich_text": [{"type": "text", "text": {"content": ""}}]}
-            },
-            {
-                "object": "block",
-                "type": "divider",
-                "divider": {}
-            },
-            {
-                "object": "block",
-                "type": "heading_3",
-                "heading_3": {"rich_text": [{"type": "text", "text": {"content": "✅ 具体的に「できたこと！」は何ですか？"}}]}
-            },
-            {
-                "object": "block",
-                "type": "bulleted_list_item",
-                "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": ""}}]}
-            },
-            {
-                "object": "block",
-                "type": "divider",
-                "divider": {}
-            },
-            {
-                "object": "block",
-                "type": "heading_3",
-                "heading_3": {"rich_text": [{"type": "text", "text": {"content": "👍 今日の作業で、特に「よくできた！」と感じる点は何ですか？"}}]}
-            },
-            {
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {"rich_text": [{"type": "text", "text": {"content": ""}}]}
-            },
-            {
-                "object": "block",
-                "type": "divider",
-                "divider": {}
-            },
-            {
-                "object": "block",
-                "type": "heading_3",
-                "heading_3": {"rich_text": [{"type": "text", "text": {"content": "💡 次に何をやるか？／今日の学び・気づき"}}]}
-            },
-            {
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {"rich_text": [{"type": "text", "text": {"content": ""}}]}
-            },
-            {
-                "object": "block",
-                "type": "divider",
-                "divider": {}
-            },
-            {
-                "object": "block",
-                "type": "heading_3",
-                "heading_3": {"rich_text": [{"type": "text", "text": {"content": "😊 今日の気分・感想"}}]}
-            },
-            {
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {"rich_text": [{"type": "text", "text": {"content": ""}}]}
-            }
-        ]
-    }
-    response = requests.patch(url, headers=HEADERS, data=json.dumps(data))
-    if response.status_code != 200:
-        print(f"日報テンプレートの追加に失敗しました ({page_id}): {response.status_code} - {response.text}")
 
 def create_monday_pages(database_id):
     # 8:00 - 9:00 ウォームアップ＆計画
@@ -429,26 +385,35 @@ def create_template_page(database_id, title, time_slot, todo, memo, start_time):
         return None
 
 if __name__ == "__main__":
-    try:
-        if not config.NOTION_API_KEY or not config.NOTION_PARENT_PAGE_ID:
-            print("エラー: Notion APIキーまたは親ページIDが設定されていません。")
-            print("NOTION_API_KEY=your_api_key_here")
-            print("NOTION_PARENT_PAGE_ID=your_parent_page_id_here")
-            sys.exit(1)
+    # 環境変数の確認
+    if not NOTION_API_KEY or not NOTION_PARENT_PAGE_ID:
+        print("エラー: Notion APIキーまたは親ページIDが設定されていません。")
+        sys.exit(1)
+
+    # メインページの作成
+    main_page_id = create_main_page(NOTION_PARENT_PAGE_ID)
+    if not main_page_id:
+        print("メインページの作成に失敗しました。処理を終了します。")
+        sys.exit(1)
+
+    # タスクデータベースの作成
+    database_id = create_task_database(main_page_id)
+    if not database_id:
+        print("タスクデータベースの作成に失敗しました。処理を終了します。")
+        sys.exit(1)
+
+    # 現在の日付から1週間分のタスクを追加
+    current_date = datetime.now()
+    for i in range(7):
+        # 週間スケジュールデータから該当の曜日のタスクを取得
+        day_of_week = current_date.weekday()
+        tasks_for_day = WEEKLY_SCHEDULE_DATA.get(day_of_week, [])
         
-        print("Notionページとデータベースの自動生成を開始します。")
-        main_page_id = create_main_page("2025年下半期 目標管理", config.NOTION_PARENT_PAGE_ID)
-        if main_page_id:
-            database_id = create_task_database(main_page_id)
-            if database_id:
-                print(f"\n作成されたデータベースID: {database_id}")
-                print("月曜日のページを作成中です...")
-                create_monday_pages(database_id)
-                print("\n月曜日のページ作成が完了しました。Notionでご確認ください。")
-            else:
-                print("データベースの作成に失敗したため、月曜日のページ作成はスキップされました。")
-        else:
-            print("メインページの作成に失敗しました。")
+        for task in tasks_for_day:
+            create_task_page_with_report(database_id, task, current_date)
+        
+        # 次の日へ
+        current_date += timedelta(days=1)
     except Exception as e:
         print(f"\nエラーが発生しました: {str(e)}")
     finally:
