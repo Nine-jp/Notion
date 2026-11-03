@@ -215,13 +215,41 @@
 </div>
 
 <script>
-const API_BASE = "http://127.0.0.1:8765";
+let API_BASE = "http://127.0.0.1:8765";
 const devices = [
   { id: "3C8427A1B592", name: "モニターライト", icon: "💡" },
   { id: "3C8427A7D10A", name: "レールライト", icon: "🔦" },
   { id: "DCDA0CACF8D2", name: "LED", icon: "🌈" }
 ];
 let states = { "3C8427A1B592": false, "3C8427A7D10A": false, "DCDA0CACF8D2": false };
+
+async function resolveApiBase() {
+  try {
+    const r = await fetch(`https://api.github.com/repos/Nine-jp/Notion/contents/switchbot/api.json?t=${Date.now()}`, {
+      headers: { "Accept": "application/vnd.github+json" },
+      cache: "no-store"
+    });
+    if (r.ok) {
+      const meta = await r.json();
+      if (meta && meta.content) {
+        const cfg = JSON.parse(atob(meta.content.replace(/\s/g, "")));
+        if (cfg && cfg.url) {
+          API_BASE = cfg.url.replace(/\/$/, "");
+          return;
+        }
+      }
+    }
+  } catch (e) {}
+  try {
+    const r2 = await fetch(`./api.json?t=${Date.now()}`, { cache: "no-store" });
+    if (r2.ok) {
+      const cfg = await r2.json();
+      if (cfg && cfg.url) {
+        API_BASE = cfg.url.replace(/\/$/, "");
+      }
+    }
+  } catch (e) {}
+}
 
 function render() {
   const grid = document.getElementById("deviceGrid");
@@ -250,18 +278,31 @@ function render() {
   masterStatus.textContent = `${onCount} / ${devices.length} 台が点灯中`;
 }
 
+async function apiCall(path, options = {}) {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, options);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return await res.json();
+  } catch (err) {
+    await resolveApiBase();
+    const res2 = await fetch(`${API_BASE}${path}`, options);
+    if (!res2.ok) throw new Error("HTTP " + res2.status);
+    return await res2.json();
+  }
+}
+
 async function fetchStates() {
   const btn = document.getElementById("refreshBtn");
   btn.classList.add("spinning");
   try {
-    const res = await fetch(`${API_BASE}/api/status`);
-    const data = await res.json();
-    if (data.states) {
+    await resolveApiBase();
+    const data = await apiCall("/api/status");
+    if (data && data.states) {
       states = data.states;
       render();
     }
   } catch (e) {
-    document.getElementById("masterStatus").textContent = "ローカルサーバー未接続 (127.0.0.1:8765)";
+    document.getElementById("masterStatus").textContent = "サーバー再接続中... ↻を押してください";
   } finally {
     setTimeout(() => btn.classList.remove("spinning"), 300);
   }
@@ -270,33 +311,39 @@ async function fetchStates() {
 async function toggleDevice(id) {
   const card = document.getElementById(`card-${id}`);
   if (card) card.classList.add("busy");
-  const target = !states[id];
+  const prev = !!states[id];
+  const target = !prev;
   states[id] = target;
   render();
   try {
-    await fetch(`${API_BASE}/api/toggle`, {
+    await apiCall("/api/toggle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: [id], on: target })
     });
   } catch (e) {
-    states[id] = !target;
+    states[id] = prev;
+    document.getElementById("masterStatus").textContent = "通信エラー（↻で再接続）";
   }
   render();
 }
 
 async function toggleAll(turnOn) {
+  const prevStates = { ...states };
   const ids = devices.map(d => d.id);
   ids.forEach(id => states[id] = turnOn);
   render();
   try {
-    await fetch(`${API_BASE}/api/toggle`, {
+    await apiCall("/api/toggle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids, on: turnOn })
     });
-  } catch (e) {}
-  render();
+  } catch (e) {
+    states = prevStates;
+    render();
+    document.getElementById("masterStatus").textContent = "通信エラー（↻で再接続）";
+  }
 }
 
 render();
