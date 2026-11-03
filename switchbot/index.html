@@ -216,6 +216,13 @@
 
 <script>
 let API_BASE = "http://127.0.0.1:8765";
+const hashMatch = location.hash.match(/k=([a-f0-9]+)/i);
+if (hashMatch) {
+  try { localStorage.setItem("sb_wk", hashMatch[1]); } catch (e) {}
+}
+const WIDGET_KEY = (hashMatch && hashMatch[1]) || (function() {
+  try { return localStorage.getItem("sb_wk") || ""; } catch (e) { return ""; }
+})();
 const devices = [
   { id: "3C8427A1B592", name: "モニターライト", icon: "💡" },
   { id: "3C8427A7D10A", name: "レールライト", icon: "🔦" },
@@ -296,7 +303,7 @@ async function fetchStates() {
   btn.classList.add("spinning");
   try {
     await resolveApiBase();
-    const data = await apiCall("/api/status");
+    const data = await apiCall(`/api/status?key=${encodeURIComponent(WIDGET_KEY)}`);
     if (data && data.states) {
       states = data.states;
       render();
@@ -319,7 +326,7 @@ async function toggleDevice(id) {
     await apiCall("/api/toggle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: [id], on: target })
+      body: JSON.stringify({ ids: [id], on: target, key: WIDGET_KEY })
     });
   } catch (e) {
     states[id] = prev;
@@ -337,7 +344,7 @@ async function toggleAll(turnOn) {
     await apiCall("/api/toggle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids, on: turnOn })
+      body: JSON.stringify({ ids, on: turnOn, key: WIDGET_KEY })
     });
   } catch (e) {
     states = prevStates;
