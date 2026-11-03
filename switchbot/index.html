@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwitchBot Control Panel</title>
+<style>
+  :root {
+    --bg: #191919;
+    --card-bg: #222222;
+    --card-hover: #2a2a2a;
+    --border: #333333;
+    --text: #ececec;
+    --subtext: #8e8e8e;
+    --accent: #2eaadc;
+    --on-color: #10b981;
+    --off-bg: #3a3a3a;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #ffffff;
+      --card-bg: #f7f7f5;
+      --card-hover: #efefef;
+      --border: #e5e5e3;
+      --text: #37352f;
+      --subtext: #787774;
+      --off-bg: #d3d3d0;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 12px 14px;
+    overflow-x: hidden;
+  }
+  .panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .master-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .master-card.active {
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.1);
+  }
+  .master-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .master-icon {
+    font-size: 20px;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(46, 170, 220, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .master-title {
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .master-sub {
+    font-size: 11px;
+    color: var(--subtext);
+    margin-top: 2px;
+  }
+  .master-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-group {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-group:hover { background: var(--card-hover); }
+  .btn-group.on-btn:hover, .btn-group.on-btn.active {
+    background: var(--on-color);
+    border-color: var(--on-color);
+    color: #fff;
+  }
+  .btn-group.off-btn:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #fff;
+  }
+  .btn-refresh {
+    border: none;
+    background: transparent;
+    color: var(--subtext);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: color 0.15s, transform 0.3s;
+  }
+  .btn-refresh:hover { color: var(--text); }
+  .btn-refresh.spinning { transform: rotate(360deg); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .device-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+  .device-card:hover { background: var(--card-hover); }
+  .device-card.on {
+    border-color: rgba(16, 185, 129, 0.55);
+    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(16, 185, 129, 0.08) 100%);
+  }
+  .device-card.busy { opacity: 0.6; pointer-events: none; }
+  .dev-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .dev-icon { font-size: 17px; flex-shrink: 0; }
+  .dev-name {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dev-state {
+    font-size: 10px;
+    color: var(--subtext);
+    margin-top: 1px;
+  }
+  .device-card.on .dev-state { color: var(--on-color); font-weight: 600; }
+  .switch {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: var(--off-bg);
+    border-radius: 20px;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .switch::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .device-card.on .switch { background: var(--on-color); }
+  .device-card.on .switch::after { transform: translateX(16px); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="master-card" id="masterCard">
+    <div class="master-info">
+      <div class="master-icon">🖥️</div>
+      <div>
+        <div class="master-title">
+          <span>PCデスク（一括制御）</span>
+        </div>
+        <div class="master-sub" id="masterStatus">ステータス取得中...</div>
+      </div>
+    </div>
+    <div class="master-actions">
+      <button class="btn-group on-btn" id="allOnBtn" onclick="toggleAll(true)">一括 ON</button>
+      <button class="btn-group off-btn" id="allOffBtn" onclick="toggleAll(false)">一括 OFF</button>
+      <button class="btn-refresh" id="refreshBtn" onclick="fetchStates()" title="状態を更新">↻</button>
+    </div>
+  </div>
+
+  <div class="grid" id="deviceGrid"></div>
+</div>
+
+<script>
+const API_BASE = "http://127.0.0.1:8765";
+const devices = [
+  { id: "3C8427A1B592", name: "モニターライト", icon: "💡" },
+  { id: "3C8427A7D10A", name: "レールライト", icon: "🔦" },
+  { id: "DCDA0CACF8D2", name: "LED", icon: "🌈" }
+];
+let states = { "3C8427A1B592": false, "3C8427A7D10A": false, "DCDA0CACF8D2": false };
+
+function render() {
+  const grid = document.getElementById("deviceGrid");
+  grid.innerHTML = devices.map(d => {
+    const isOn = !!states[d.id];
+    return `
+      <div class="device-card ${isOn ? 'on' : ''}" id="card-${d.id}" onclick="toggleDevice('${d.id}')">
+        <div class="dev-left">
+          <span class="dev-icon">${d.icon}</span>
+          <div>
+            <div class="dev-name">${d.name}</div>
+            <div class="dev-state">${isOn ? 'ON' : 'OFF'}</div>
+          </div>
+        </div>
+        <div class="switch"></div>
+      </div>
+    `;
+  }).join("");
+
+  const onCount = devices.filter(d => states[d.id]).length;
+  const masterCard = document.getElementById("masterCard");
+  const masterStatus = document.getElementById("masterStatus");
+  const allOnBtn = document.getElementById("allOnBtn");
+  masterCard.classList.toggle("active", onCount > 0);
+  allOnBtn.classList.toggle("active", onCount === devices.length);
+  masterStatus.textContent = `${onCount} / ${devices.length} 台が点灯中`;
+}
+
+async function fetchStates() {
+  const btn = document.getElementById("refreshBtn");
+  btn.classList.add("spinning");
+  try {
+    const res = await fetch(`${API_BASE}/api/status`);
+    const data = await res.json();
+    if (data.states) {
+      states = data.states;
+      render();
+    }
+  } catch (e) {
+    document.getElementById("masterStatus").textContent = "ローカルサーバー未接続 (127.0.0.1:8765)";
+  } finally {
+    setTimeout(() => btn.classList.remove("spinning"), 300);
+  }
+}
+
+async function toggleDevice(id) {
+  const card = document.getElementById(`card-${id}`);
+  if (card) card.classList.add("busy");
+  const target = !states[id];
+  states[id] = target;
+  render();
+  try {
+    await fetch(`${API_BASE}/api/toggle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [id], on: target })
+    });
+  } catch (e) {
+    states[id] = !target;
+  }
+  render();
+}
+
+async function toggleAll(turnOn) {
+  const ids = devices.map(d => d.id);
+  ids.forEach(id => states[id] = turnOn);
+  render();
+  try {
+    await fetch(`${API_BASE}/api/toggle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids, on: turnOn })
+    });
+  } catch (e) {}
+  render();
+}
+
+render();
+fetchStates();
+</script>
+</body>
+</html>
